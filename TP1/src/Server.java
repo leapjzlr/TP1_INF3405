@@ -1,5 +1,9 @@
+import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -7,6 +11,7 @@ import java.net.Socket;
 
 public class Server {
 	private static ServerSocket listener;
+	private static Socket client;
 	
 	public static void main(String[] args) throws Exception
 	{
@@ -22,12 +27,17 @@ public class Server {
 		
 		System.out.format("The server is running on %s:%d%n", serverAddress, serverPort);
 		
+		client = listener.accept();
+		
 		try {
+			verifyLog();
 			while(true) {
 				new ClientHandler(listener.accept(), clientNumber++).start();
+				
 			}
 		}
 		finally {
+		
 			listener.close();
 		}
 	}
@@ -58,6 +68,18 @@ public class Server {
 			}
 			System.out.println("Connection with client#" + clientNumber + "closed");
 		}
+	}
+	
+	private static void verifyLog() throws Exception{
+		BufferedReader input = new BufferedReader(new InputStreamReader(client.getInputStream()));
+		String username = input.readLine();
+		String password = input.readLine();
+		System.out.print(username);
+		System.out.print(password);
+		
+		PrintWriter output = new PrintWriter(new OutputStreamWriter(client.getOutputStream()));
+		
+		
 	}
 }
 
