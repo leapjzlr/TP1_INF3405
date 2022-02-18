@@ -3,6 +3,7 @@ import java.io.DataInputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.IOException;
 import java.net.Socket;
 import java.util.Scanner; //classe pour avoir le input de l'utilisateur
 
@@ -85,15 +86,14 @@ public class Client {
 		output.println(passwordStr);
 		output.flush();
 		
-		BufferedReader response = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-		String responseStr = response.readLine();
-		System.out.print(responseStr);
-		
-		DataInputStream in = new DataInputStream(socket.getInputStream());
-		
-		String message = in.readUTF();
-		System.out.println(message);
-		
+		try {
+			BufferedReader response = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			response.readLine();
+		}
+		catch(IOException e){
+			System.out.print("Erreur dans la saisie du mot de passe");
+		}
+
 		
 		socket.close();
 	}

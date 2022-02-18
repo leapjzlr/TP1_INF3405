@@ -1,9 +1,10 @@
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -11,11 +12,11 @@ import java.net.Socket;
 
 public class Server {
 	private static ServerSocket listener;
-	private static Socket client;
+	//private static Socket client;
 	
 	public static void main(String[] args) throws Exception
 	{
-		int clientNumber = 0;
+		
 		String serverAddress = "127.0.0.1";
 		int serverPort = 5000;
 		
@@ -27,17 +28,19 @@ public class Server {
 		
 		System.out.format("The server is running on %s:%d%n", serverAddress, serverPort);
 		
-		client = listener.accept();
+		//client = listener.accept();
 		
 		try {
-			verifyLog();
+			
 			while(true) {
-				new ClientHandler(listener.accept(), clientNumber++).start();
-				
+				verifyLog();
+				//new ClientHandler(listener.accept(), clientNumber++).start();
 			}
 		}
+		catch(Exception e) {
+			System.out.print("connection refusée");
+		}
 		finally {
-		
 			listener.close();
 		}
 	}
@@ -51,6 +54,8 @@ public class Server {
 			this.clientNumber = clientNumber;
 			System.out.println("New connection with client#" + clientNumber + "at" + socket);
 		}
+		
+		
 		
 		public void run() {
 			try {
@@ -71,14 +76,39 @@ public class Server {
 	}
 	
 	private static void verifyLog() throws Exception{
-		BufferedReader input = new BufferedReader(new InputStreamReader(client.getInputStream()));
+		int clientNumber = 0;
+		
+		BufferedReader input = new BufferedReader(new InputStreamReader(listener.accept().getInputStream()));
 		String username = input.readLine();
 		String password = input.readLine();
-		System.out.print(username);
-		System.out.print(password);
+
+		FileInputStream reader = new FileInputStream("database.txt");
+		DataInputStream in = new DataInputStream(reader);
+		BufferedReader br = new BufferedReader(new InputStreamReader(in));
+		String line;
+
+		Boolean found = false;
+		while((line = br.readLine()) != null) {
+			String[] tokens = line.split(" ");
+
+			if (username.equals(tokens[0]) && password.equals(tokens[1])) {
+				found = true;
+				new ClientHandler(listener.accept(), clientNumber++).start();
+			}
+			else if(username.equals(tokens[0]) && !password.equals(tokens[1])) {
+				found = true;
+				System.out.print(tokens[0] + ' ' + tokens[1]);
+				listener.close();	
+			}
+		}
 		
-		PrintWriter output = new PrintWriter(new OutputStreamWriter(client.getOutputStream()));
-		
+		if(!found) {
+			FileWriter myWriter = new FileWriter("database.txt", true);
+			myWriter.write(username + " " + password +"\n");
+			myWriter.close();
+			new ClientHandler(listener.accept(), clientNumber++).start();
+		}
+				
 		
 	}
 }
